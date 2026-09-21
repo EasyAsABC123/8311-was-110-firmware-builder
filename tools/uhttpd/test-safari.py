@@ -90,7 +90,7 @@ int main(void) {
         suffix = ' Mobile/15E148 Safari/604.1'
         cases = []
         for version in ['27.0', '27.0.1', '27.1', '28.0', '100.0']:
-            cases.append((prefix+'Version/'+version+suffix, 'UH_UA_SAFARI_27', False))
+            cases.append((prefix+'Version/'+version+suffix, 'UH_UA_SAFARI_27_PLUS', False))
         for version in ['26.9', '17.6', '', '27', '27.', '27..0', '27.0x', '-27.0', '999999999999999999999.0']:
             cases.append((prefix+'Version/'+version+suffix, 'UH_UA_SAFARI', True))
         cases += [(prefix+suffix, 'UH_UA_SAFARI', True),
@@ -103,9 +103,9 @@ int main(void) {
         for ua, classification, closes in cases:
             harness += f'check({json.dumps(ua)}, {classification}, false, false, false, {str(closes).lower()});\n'
         modern = json.dumps(prefix+'Version/27.0'+suffix)
-        harness += f'check({modern}, UH_UA_SAFARI_27, true, false, false, true);\n'  # HTTP/1.0/global close already set
-        harness += f'check({modern}, UH_UA_SAFARI_27, false, true, false, true);\n'
-        harness += f'check({modern}, UH_UA_SAFARI_27, false, false, true, false);\n'
+        harness += f'check({modern}, UH_UA_SAFARI_27_PLUS, true, false, false, true);\n'  # HTTP/1.0/global close already set
+        harness += f'check({modern}, UH_UA_SAFARI_27_PLUS, false, true, false, true);\n'
+        harness += f'check({modern}, UH_UA_SAFARI_27_PLUS, false, false, true, false);\n'
         harness += 'check("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)", UH_UA_MSIE_OLD, false, false, true, true);\n'
         harness += 'check("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)", UH_UA_MSIE_OLD, false, false, false, false);\n'
         harness += f'puts("Passed {len(cases)+5} actual-parser/policy checks"); return 0; }}\n'

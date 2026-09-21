@@ -51,7 +51,7 @@
  		else if (strstr(val, "Safari/") && strstr(val, "Mac OS X"))
 -			r->ua = UH_UA_SAFARI;
 +			r->ua = safari_keepalive_supported(val) ?
-+				UH_UA_SAFARI_27 : UH_UA_SAFARI;
++				UH_UA_SAFARI_27_PLUS : UH_UA_SAFARI;
  		else if (strstr(val, "Gecko/"))
  			r->ua = UH_UA_GECKO;
  		else if (strstr(val, "Konqueror"))
@@ -62,7 +62,7 @@
  	UH_UA_MSIE_OLD,
  	UH_UA_MSIE_NEW,
 +	/* Keep existing enum values stable; no forced-close workaround. */
-+	UH_UA_SAFARI_27,
++	UH_UA_SAFARI_27_PLUS,
  };
  
  struct http_request {
