@@ -9,26 +9,32 @@ Package integration is deliberately pending maintainer review in the draft PR.
 
 ## Behavior
 
-uhttpd currently classifies any matching Safari UA as `UH_UA_SAFARI`, then
-forces `r->connection_close = true` in `client_header_complete()`. The patch
-adds a separate classification for Safari with a well-formed numeric product
-`Version/27.0` or newer. That classification follows the normal connection
-policy instead of the legacy forced-close case. Existing enum values and the
-request structure layout are preserved.
+uhttpd currently classifies Safari-like UAs as `UH_UA_SAFARI`, then forces
+`r->connection_close = true` in `client_header_complete()`. The patch adds a
+shared `UH_UA_WEBKIT_KEEPALIVE` classification for these separately gated cases:
 
-- Preserve the legacy workaround for Safari below 27 and missing/malformed
-  product versions. Do not infer product version from `Safari/604.1`.
-- Retain existing Chrome/Opera/IE classification precedence. Known CriOS,
-  FxiOS, EdgiOS and OPiOS tokens do not receive the new Safari exception.
-- Never clear a prior close decision: explicit client close, HTTP/1.0 and
-  globally disabled keep-alive still take precedence.
-- Preserve the old IE POST workaround.
+- Safari product **Version/27.0 or greater**, with a valid dotted version.
+- Chrome on iPhone **CriOS/153.0.8010.24 or greater**, with all four version
+  components, **and iOS 27.0 or greater**, reported as `CPU iPhone OS 27_0...`.
 
-Safari 27.0 is the proposed minimum because that is the tested version. Newer
-versions are allowed as a proposed compatibility policy; they have not been
-measured. Desktop Safari 27 was not tested. A later CriOS experiment is documented below;
-the source patch still excludes it pending a separate eligibility policy.
-UA parsing is compatibility detection, not a security boundary.
+The new class follows the normal connection policy instead of the forced-close
+case. Existing enum values and request structure layout are preserved.
+
+Chrome's application version does not substitute for its OS/WebKit version:
+both CriOS and iOS gates must pass. Older, absent, duplicate, malformed,
+overlong or abbreviated versions retain the workaround. CriOS iPad/iPod and
+desktop-mode variants are not enabled by this initial iPhone-specific rule.
+Frozen OS tokens below 27 also retain the workaround. FxiOS, EdgiOS and OPiOS
+remain excluded. Safari uses its product Version token, not `Safari/604.1` or
+its potentially frozen CPU OS token.
+
+Existing Chrome/Opera/IE classification precedence is retained. The patch
+never clears a prior close decision, preserving explicit client close,
+HTTP/1.0/global keep-alive decisions and the old IE POST workaround.
+
+These minimums match the tested versions. Allowing newer versions is a
+compatibility policy, not evidence of testing future releases. UA parsing is
+compatibility detection, not a security boundary.
 
 ## Evidence and limitations
 
@@ -82,10 +88,10 @@ git -C /tmp/uhttpd-safari-review checkout 3abcc89103799aaa79870fffcd58ec43708150
 python3 tools/uhttpd/test-safari.py /tmp/uhttpd-safari-review
 ```
 
-The test checks the original source hashes, applies the patch in a temporary
+The 63-case test checks the original source hashes, applies the patch in a temporary
 copy, and compiles the actual patched UA parser and close-policy switch with
 minimal transport stubs. It exercises current/older/future/malformed versions,
-known alternative browser tokens, pre-existing close decisions, explicit close,
+independent CriOS/iOS thresholds, known alternative browser tokens, pre-existing close decisions, explicit close,
 POST behavior and legacy IE. It does not emulate the full HTTP transport; the
 separate device experiment supplied that evidence for the switch-based build.
 Python 3, `patch` and a host C compiler are required; tests do not contact a
@@ -116,6 +122,7 @@ keep-alive loads 2.278 / 0.403 / 0.388 s. A 45-second keep-alive capture complet
 The Chrome test was conducted through one continuous USB inspector connection;
 failed reconnect attempts were excluded. All temporary changes were removed.
 
-The patch still excludes CriOS because Chrome's application version is not a
-WebKit version. See the combined upstream report and version-policy discussion:
+The patch now includes this combination using independent CriOS and iOS
+minimums, retaining the workaround on older or unidentified combinations.
+See the combined upstream report and version-policy discussion:
 https://github.com/openwrt/uhttpd/issues/42
