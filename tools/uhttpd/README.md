@@ -26,7 +26,8 @@ request structure layout are preserved.
 
 Safari 27.0 is the proposed minimum because that is the tested version. Newer
 versions are allowed as a proposed compatibility policy; they have not been
-measured. Desktop Safari 27 and alternative iOS browsers were not tested.
+measured. Desktop Safari 27 was not tested. A later CriOS experiment is documented below;
+the source patch still excludes it pending a separate eligibility policy.
 UA parsing is compatibility detection, not a security boundary.
 
 ## Evidence and limitations
@@ -105,3 +106,16 @@ matching IPKs in `packages/basic/`. Do not overwrite modem libraries with SDK
 link-time copies. Once reviewed and tested, the rebuilt packages make the
 change part of a normal firmware image. Reverting this patch and rebuilding
 restores the original Safari workaround.
+
+## CriOS follow-up
+
+Chrome 153.0.8010.24 on iOS 27.0 showed the same benefit in a separate completed
+switch-based off/on/off test: stock dashboard loads 6.719 / 4.638 / 4.472 s;
+keep-alive loads 2.278 / 0.403 / 0.388 s. A 45-second keep-alive capture completed
+73 HTTP 200/304 responses without network errors or JavaScript exceptions.
+The Chrome test was conducted through one continuous USB inspector connection;
+failed reconnect attempts were excluded. All temporary changes were removed.
+
+The patch still excludes CriOS because Chrome's application version is not a
+WebKit version. See the combined upstream report and version-policy discussion:
+https://github.com/openwrt/uhttpd/issues/42
